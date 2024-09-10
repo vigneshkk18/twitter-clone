@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
+import cookieParser from "cookie-parser";
 
 import authRoutes from "./routes/auth.routes";
 import connectMongoDB from "./db/connectMongoDB";
@@ -11,6 +12,7 @@ import errorHandlerMiddleware from "./middlewares/errorHandler";
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRoutes);

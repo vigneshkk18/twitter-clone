@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
+import { StatusCodes } from "http-status-codes";
 
 import User from "../models/user.model";
 
+import { UnauthenticatedError, BadRequestError } from "../errors";
 import { generateTokenAndSetCookie } from "../lib/utils/generateToken";
-import BadRequest from "../errors/bad-request";
-import { StatusCodes } from "http-status-codes";
 
 export const signup = async (req: Request, res: Response) => {
   const user = await User.create(req.body);
@@ -28,7 +28,7 @@ export const login = async (req: Request, res: Response) => {
   const isPasswordCorrect = await user?.comparePassword(password);
 
   if (!user || !isPasswordCorrect) {
-    throw new BadRequest("Invalid Credentials.");
+    throw new BadRequestError("Invalid Credentials.");
   }
 
   generateTokenAndSetCookie(user._id, res);
@@ -47,4 +47,13 @@ export const login = async (req: Request, res: Response) => {
 export const logout = async (req: Request, res: Response) => {
   res.cookie("jwt", "", { maxAge: 0 });
   res.status(StatusCodes.OK).json({ message: "Logged out successfully" });
+};
+
+export const getMe = async (req: Request, res: Response) => {
+  if (!req.user)
+    throw new UnauthenticatedError("Unauthorized: Please login to continue.");
+
+  const user = await User.findById(req.user._id).select("-password");
+
+  res.status(StatusCodes.OK).json(user);
 };
