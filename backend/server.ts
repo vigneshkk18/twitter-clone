@@ -1,13 +1,21 @@
-import express from "express";
-import authRoutes from "./routes/auth.routes";
+import "express-async-errors";
 import dotenv from "dotenv";
-import connectMongoDB from "./db/connectMongoDB";
-
 dotenv.config();
+
+import express from "express";
+
+import authRoutes from "./routes/auth.routes";
+import connectMongoDB from "./db/connectMongoDB";
+import errorHandlerMiddleware from "./middlewares/errorHandler";
 
 const app = express();
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.use("/api/auth", authRoutes);
+
+app.use(errorHandlerMiddleware);
 
 async function startServer() {
   try {
