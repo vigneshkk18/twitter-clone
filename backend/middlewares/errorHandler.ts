@@ -27,6 +27,7 @@ const errorHandlerMiddleware: ErrorRequestHandler = (err, req, res, next) => {
     customError.statusCode = StatusCodes.NOT_FOUND;
   }
 
+  console.log(`Error: `, err);
   return res.status(customError.statusCode).json({ msg: customError.msg });
 };
 
