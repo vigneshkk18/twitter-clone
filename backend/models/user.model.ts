@@ -53,7 +53,14 @@ const UserSchema = new mongoose.Schema(
       default: "",
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    methods: {
+      async comparePassword(candidatePassword) {
+        return !!(await bcrypt.compare(candidatePassword, this.password || ""));
+      },
+    },
+  }
 );
 
 UserSchema.pre("save", async function () {
