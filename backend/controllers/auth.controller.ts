@@ -45,7 +45,6 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const logout = async (req: Request, res: Response) => {
-  res.json({
-    data: "You hit the logout endpoint.",
-  });
+  res.cookie("jwt", "", { maxAge: 0 });
+  res.status(StatusCodes.OK).json({ message: "Logged out successfully" });
 };
