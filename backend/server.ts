@@ -8,6 +8,7 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import postRoutes from "./routes/post.routes";
+import notificationRoutes from "./routes/notification.routes";
 import connectMongoDB from "./db/connectMongoDB";
 import { protectRoute } from "./middlewares/protectRoute";
 import errorHandlerMiddleware from "./middlewares/errorHandler";
@@ -28,6 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/users", protectRoute, userRoutes);
 app.use("/api/posts", protectRoute, postRoutes);
+app.use("/api/notifications", protectRoute, notificationRoutes);
 
 app.use(errorHandlerMiddleware);
 
