@@ -10,8 +10,11 @@ import { MdEdit } from "react-icons/md";
 import EditProfileModal from "../../components/Profile/EditProfileModal";
 import ProfileHeaderSkeleton from "../../components/Profile/ProfileHeaderSkeleton";
 import Posts from "../../components/Posts/Posts";
+import { useQuery } from "@tanstack/react-query";
 
 const ProfilePage = () => {
+  const { data: user } = useQuery<any>({ queryKey: ["authUser"] });
+
   const [coverImg, setCoverImg] = useState<any>(null);
   const [profileImg, setProfileImg] = useState<any>(null);
   const [feedType, setFeedType] = useState("posts");
@@ -21,18 +24,6 @@ const ProfilePage = () => {
 
   const isLoading = false;
   const isMyProfile = true;
-
-  const user = {
-    _id: "1",
-    fullName: "John Doe",
-    username: "johndoe",
-    profileImg: "/avatars/boy2.png",
-    coverImg: "/cover.png",
-    bio: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    link: "https://youtube.com/@asaprogrammer_",
-    following: ["1", "2", "3"],
-    followers: ["1", "2", "3"],
-  };
 
   const handleImgChange = (
     e: React.ChangeEvent<HTMLInputElement>,
