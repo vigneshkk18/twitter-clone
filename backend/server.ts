@@ -12,6 +12,7 @@ import notificationRoutes from "./routes/notification.routes";
 import connectMongoDB from "./db/connectMongoDB";
 import { protectRoute } from "./middlewares/protectRoute";
 import errorHandlerMiddleware from "./middlewares/errorHandler";
+import path from "path";
 
 dotenv.config();
 cloudinary.config({
@@ -32,6 +33,16 @@ app.use("/api/posts", protectRoute, postRoutes);
 app.use("/api/notifications", protectRoute, notificationRoutes);
 
 app.use(errorHandlerMiddleware);
+
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../../frontend/dist")));
+
+  app.get("*", (req, res) => {
+    res.sendFile(
+      path.resolve(__dirname, "../../frontend", "dist", "index.html")
+    );
+  });
+}
 
 async function startServer() {
   try {

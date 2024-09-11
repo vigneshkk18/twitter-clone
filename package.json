@@ -4,9 +4,10 @@
   "description": "",
   "main": "backend/dist/server.js",
   "scripts": {
-    "build": "cd backend && npx tsc",
-    "dev": "nodemon backend/server.ts",
-    "start": "node backend/server.ts"
+    "dev": "cross-env NODE_ENV=development nodemon backend/server.ts",
+    "build:api": "cd backend && tsc -b && cd ..",
+    "start": "cross-env npm run build:api && cross-env NODE_ENV=production node backend/dist/server.js",
+    "build": "npm run build:api && npm install && npm install --prefix frontend && npm run build --prefix frontend"
   },
   "keywords": [],
   "author": "",
@@ -31,6 +32,7 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^22.5.4",
     "autoprefixer": "^10.4.20",
+    "cross-env": "^7.0.3",
     "nodemon": "^3.1.4",
     "postcss": "^8.4.45",
     "tailwindcss": "^3.4.10",
