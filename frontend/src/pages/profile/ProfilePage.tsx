@@ -10,11 +10,14 @@ import { MdEdit } from "react-icons/md";
 import EditProfileModal from "../../components/Profile/EditProfileModal";
 import ProfileHeaderSkeleton from "../../components/Profile/ProfileHeaderSkeleton";
 import Posts from "../../components/Posts/Posts";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatMemberSinceDate } from "../../utils/date";
+import useFollow from "../../hooks/useFollow";
+import toast from "react-hot-toast";
 
 const ProfilePage = () => {
   const { username } = useParams();
+  const queryClient = useQueryClient();
   const { data: currUser, isLoading: isCurrUserLoading } = useQuery<any>({
     queryKey: ["authUser"],
   });
@@ -34,6 +37,8 @@ const ProfilePage = () => {
     },
   });
 
+  const { follow, isPending: isFollowPending } = useFollow();
+
   const isLoading = isCurrUserLoading || isProfileLoading || isRefetching;
 
   const [coverImg, setCoverImg] = useState<any>(null);
@@ -45,7 +50,34 @@ const ProfilePage = () => {
   const coverImgRef = useRef<HTMLInputElement>(null);
   const profileImgRef = useRef<HTMLInputElement>(null);
 
+  const { mutate: updateProfile, isPending: isUpdatingProfile } = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/users/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          coverImg,
+          profileImg,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Profile updated successfully");
+      setProfileImg(null);
+      setCoverImg(null);
+
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["authUser"] }),
+        queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
+      ]);
+    },
+  });
+
   const isMyProfile = user?.username === currUser?.username;
+  const amIFollowing = currUser?.following?.includes(user?._id);
   const memberSince = formatMemberSinceDate(user?.createdAt);
 
   const handleImgChange = (
@@ -140,21 +172,23 @@ const ProfilePage = () => {
                 </div>
               </div>
               <div className="flex justify-end px-4 mt-5">
-                {isMyProfile && <EditProfileModal />}
+                {isMyProfile && <EditProfileModal user={currUser} />}
                 {!isMyProfile && (
                   <button
                     className="btn btn-outline rounded-full btn-sm"
-                    onClick={() => alert("Followed successfully")}
+                    onClick={() => follow(user?._id)}
                   >
-                    Follow
+                    {isFollowPending && "Loading..."}
+                    {!isFollowPending && amIFollowing && "UnFollow"}
+                    {!isFollowPending && !amIFollowing && "Follow"}
                   </button>
                 )}
                 {(coverImg || profileImg) && (
                   <button
                     className="btn btn-primary rounded-full btn-sm text-white px-4 ml-2"
-                    onClick={() => alert("Profile updated successfully")}
+                    onClick={() => updateProfile()}
                   >
-                    Update
+                    {isUpdatingProfile ? "Updating..." : "Update"}
                   </button>
                 )}
               </div>
@@ -174,12 +208,12 @@ const ProfilePage = () => {
                       <>
                         <FaLink className="w-3 h-3 text-slate-500" />
                         <a
-                          href="https://youtube.com/@asaprogrammer_"
+                          href={user.link}
                           target="_blank"
                           rel="noreferrer"
                           className="text-sm text-blue-500 hover:underline"
                         >
-                          youtube.com/@asaprogrammer_
+                          {user.link}
                         </a>
                       </>
                     </div>

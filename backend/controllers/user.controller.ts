@@ -91,7 +91,6 @@ export const updateUserProfile = async (req: Request, res: Response) => {
   const userId = req.user._id;
 
   const user = await User.findById(userId);
-
   if (!user) throw new NotFoundError("User not found");
 
   if ((!newPassword && currentPassword) || (!currentPassword && newPassword)) {
@@ -128,14 +127,13 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     coverImg = uploadedResponse.secure_url;
   }
 
-  user.fullName = fullName ?? user.fullName;
-  user.email = email ?? user.email;
-  user.username = username ?? user.username;
-  user.bio = bio ?? user.bio;
-  user.link = link ?? user.link;
-  user.profileImg = profileImg ?? user.profileImg;
-  user.coverImg = coverImg ?? user.coverImg;
-
+  user.fullName = fullName || user.fullName;
+  user.email = email || user.email;
+  user.username = username || user.username;
+  user.bio = bio || user.bio;
+  user.link = link || user.link;
+  user.profileImg = profileImg || user.profileImg;
+  user.coverImg = coverImg || user.coverImg;
   const updatedUser = await user.save();
 
   // @ts-ignore
