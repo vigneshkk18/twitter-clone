@@ -4,15 +4,25 @@ import PostSkeleton from "./PostSkeleton";
 import { useQuery } from "@tanstack/react-query";
 
 interface Posts {
-  feedType: "forYou" | "following";
+  feedType: "forYou" | "following" | "posts" | "likes";
+  username?: string;
+  userId?: string;
 }
 
-const getPostsEndpoint = (feedType: Posts["feedType"]) => {
+const getPostsEndpoint = (
+  feedType: Posts["feedType"],
+  username?: string,
+  userId?: string
+) => {
   if (feedType === "following") return "/api/posts/following";
+  if (feedType === "posts" && username) return `/api/posts/user/${username}`;
+  if (feedType === "likes" && userId) return `/api/posts/likes/${userId}`;
   return "/api/posts/all";
 };
 
-const Posts = ({ feedType }: Posts) => {
+const Posts = ({ feedType, username, userId }: Posts) => {
+  const POST_ENDPOINT = getPostsEndpoint(feedType, username, userId);
+
   const {
     data: posts,
     isLoading,
@@ -21,7 +31,7 @@ const Posts = ({ feedType }: Posts) => {
   } = useQuery({
     queryKey: ["posts"],
     queryFn: async () => {
-      const res = await fetch(getPostsEndpoint(feedType));
+      const res = await fetch(POST_ENDPOINT);
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || "Something went wrong");
@@ -32,7 +42,7 @@ const Posts = ({ feedType }: Posts) => {
 
   useEffect(() => {
     refetch();
-  }, [feedType]);
+  }, [feedType, username]);
 
   return (
     <>

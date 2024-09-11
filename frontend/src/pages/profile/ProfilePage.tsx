@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 
 import { POSTS } from "../../utils/db/dummy";
 
@@ -11,19 +11,42 @@ import EditProfileModal from "../../components/Profile/EditProfileModal";
 import ProfileHeaderSkeleton from "../../components/Profile/ProfileHeaderSkeleton";
 import Posts from "../../components/Posts/Posts";
 import { useQuery } from "@tanstack/react-query";
+import { formatMemberSinceDate } from "../../utils/date";
 
 const ProfilePage = () => {
-  const { data: user } = useQuery<any>({ queryKey: ["authUser"] });
+  const { username } = useParams();
+  const { data: currUser, isLoading: isCurrUserLoading } = useQuery<any>({
+    queryKey: ["authUser"],
+  });
+
+  const {
+    data: user,
+    isLoading: isProfileLoading,
+    refetch,
+    isRefetching,
+  } = useQuery<any>({
+    queryKey: ["userProfile"],
+    queryFn: async () => {
+      const res = await fetch(`/api/users/profile/${username}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      return data;
+    },
+  });
+
+  const isLoading = isCurrUserLoading || isProfileLoading || isRefetching;
 
   const [coverImg, setCoverImg] = useState<any>(null);
   const [profileImg, setProfileImg] = useState<any>(null);
-  const [feedType, setFeedType] = useState("posts");
+  const [feedType, setFeedType] = useState<
+    "forYou" | "following" | "posts" | "likes"
+  >("posts");
 
   const coverImgRef = useRef<HTMLInputElement>(null);
   const profileImgRef = useRef<HTMLInputElement>(null);
 
-  const isLoading = false;
-  const isMyProfile = true;
+  const isMyProfile = user?.username === currUser?.username;
+  const memberSince = formatMemberSinceDate(user?.createdAt);
 
   const handleImgChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -40,6 +63,10 @@ const ProfilePage = () => {
       reader.readAsDataURL(file);
     }
   };
+
+  useEffect(() => {
+    refetch();
+  }, [username]);
 
   return (
     <>
@@ -160,7 +187,7 @@ const ProfilePage = () => {
                   <div className="flex gap-2 items-center">
                     <IoCalendarOutline className="w-4 h-4 text-slate-500" />
                     <span className="text-sm text-slate-500">
-                      Joined July 2021
+                      {memberSince}
                     </span>
                   </div>
                 </div>
@@ -202,7 +229,11 @@ const ProfilePage = () => {
             </>
           )}
 
-          <Posts />
+          <Posts
+            feedType={feedType}
+            username={user?.username}
+            userId={user?._id}
+          />
         </div>
       </div>
     </>
