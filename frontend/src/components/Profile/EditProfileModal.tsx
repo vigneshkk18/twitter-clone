@@ -1,6 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
+import useUpdateUserProfile from "../../hooks/useUpdateUserProfile";
 
 const EditProfileModal = ({ user }: any) => {
   const [formData, setFormData] = useState({
@@ -13,36 +12,7 @@ const EditProfileModal = ({ user }: any) => {
     currentPassword: "",
   });
 
-  const queryClient = useQueryClient();
-  const { mutate: updateProfile, isPending: isUpdatingProfile } = useMutation({
-    mutationFn: async () => {
-      const res = await fetch("/api/users/update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
-      return data;
-    },
-    onSuccess: () => {
-      toast.success("Profile updated successfully");
-      setFormData({
-        fullName: "",
-        username: "",
-        email: "",
-        bio: "",
-        link: "",
-        newPassword: "",
-        currentPassword: "",
-      });
-
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["authUser"] }),
-        queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
-      ]);
-    },
-  });
+  const { updateProfile, isUpdatingProfile } = useUpdateUserProfile();
 
   const handleInputChange: React.ChangeEventHandler<
     HTMLInputElement | HTMLTextAreaElement
@@ -82,7 +52,7 @@ const EditProfileModal = ({ user }: any) => {
             className="flex flex-col gap-4"
             onSubmit={(e) => {
               e.preventDefault();
-              updateProfile();
+              updateProfile(formData);
             }}
           >
             <div className="flex flex-wrap gap-2">

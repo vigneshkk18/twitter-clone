@@ -10,14 +10,13 @@ import { MdEdit } from "react-icons/md";
 import EditProfileModal from "../../components/Profile/EditProfileModal";
 import ProfileHeaderSkeleton from "../../components/Profile/ProfileHeaderSkeleton";
 import Posts from "../../components/Posts/Posts";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { formatMemberSinceDate } from "../../utils/date";
 import useFollow from "../../hooks/useFollow";
-import toast from "react-hot-toast";
+import useUpdateUserProfile from "../../hooks/useUpdateUserProfile";
 
 const ProfilePage = () => {
   const { username } = useParams();
-  const queryClient = useQueryClient();
   const { data: currUser, isLoading: isCurrUserLoading } = useQuery<any>({
     queryKey: ["authUser"],
   });
@@ -50,31 +49,7 @@ const ProfilePage = () => {
   const coverImgRef = useRef<HTMLInputElement>(null);
   const profileImgRef = useRef<HTMLInputElement>(null);
 
-  const { mutate: updateProfile, isPending: isUpdatingProfile } = useMutation({
-    mutationFn: async () => {
-      const res = await fetch("/api/users/update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          coverImg,
-          profileImg,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
-      return data;
-    },
-    onSuccess: () => {
-      toast.success("Profile updated successfully");
-      setProfileImg(null);
-      setCoverImg(null);
-
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["authUser"] }),
-        queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
-      ]);
-    },
-  });
+  const { updateProfile, isUpdatingProfile } = useUpdateUserProfile();
 
   const isMyProfile = user?.username === currUser?.username;
   const amIFollowing = currUser?.following?.includes(user?._id);
@@ -186,7 +161,11 @@ const ProfilePage = () => {
                 {(coverImg || profileImg) && (
                   <button
                     className="btn btn-primary rounded-full btn-sm text-white px-4 ml-2"
-                    onClick={() => updateProfile()}
+                    onClick={async () => {
+                      await updateProfile({ coverImg, profileImg });
+                      setProfileImg(null);
+                      setCoverImg(null);
+                    }}
                   >
                     {isUpdatingProfile ? "Updating..." : "Update"}
                   </button>
