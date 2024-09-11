@@ -4,33 +4,41 @@ import { IoSettingsOutline } from "react-icons/io5";
 import { FaUser } from "react-icons/fa";
 import { FaHeart } from "react-icons/fa6";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 const NotificationPage = () => {
-  const isLoading = false;
-  const notifications = [
-    {
-      _id: "1",
-      from: {
-        _id: "1",
-        username: "johndoe",
-        profileImg: "/avatars/boy2.png",
-      },
-      type: "follow",
-    },
-    {
-      _id: "2",
-      from: {
-        _id: "2",
-        username: "janedoe",
-        profileImg: "/avatars/girl1.png",
-      },
-      type: "like",
-    },
-  ];
+  const {
+    data: notifications,
+    isLoading,
+    refetch,
+  } = useQuery<any[]>({
+    queryKey: ["notifications"],
+    queryFn: async () => {
+      const res = await fetch("/api/notifications");
+      const data = await res.json();
 
-  const deleteNotifications = () => {
-    alert("All notifications deleted");
-  };
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      return data;
+    },
+  });
+
+  const { mutate: deleteNotifications, isPending } = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/notifications", { method: "DELETE" });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      return data;
+    },
+    onSuccess: () => {
+      refetch();
+      toast.success("Notifications deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   return (
     <>
@@ -46,7 +54,9 @@ const NotificationPage = () => {
               className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52"
             >
               <li>
-                <a onClick={deleteNotifications}>Delete all notifications</a>
+                <a onClick={() => deleteNotifications()}>
+                  {isPending ? "Loading..." : "Delete all notifications"}
+                </a>
               </li>
             </ul>
           </div>
