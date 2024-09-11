@@ -28,8 +28,32 @@ const Post = ({ post }: any) => {
     },
   });
 
+  const { mutate: likePost, isPending: isLiking } = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/posts/${post._id}/like`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      return data;
+    },
+    onSuccess: (data) => {
+      toast.success("Post liked successfully");
+
+      queryClient.setQueryData(["posts"], (oldData: any[]) => {
+        return oldData.map((currPost: any) => {
+          if (currPost._id !== post._id) return currPost;
+          return { ...currPost, likes: data };
+        });
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
   const postOwner = post.user;
-  const isLiked = false;
+  const isLiked = post.likes.includes(user._id);
 
   const isMyPost = postOwner._id === user._id;
 
@@ -45,7 +69,10 @@ const Post = ({ post }: any) => {
     e.preventDefault();
   };
 
-  const handleLikePost = () => {};
+  const handleLikePost = () => {
+    if (isLiking) return;
+    likePost();
+  };
 
   return (
     <>
@@ -159,11 +186,7 @@ const Post = ({ post }: any) => {
                       onChange={(e) => setComment(e.target.value)}
                     />
                     <button className="btn btn-primary rounded-full btn-sm text-white px-4">
-                      {isCommenting ? (
-                        <span className="loading loading-spinner loading-md"></span>
-                      ) : (
-                        "Post"
-                      )}
+                      {isCommenting ? <LoadingSpinner size="md" /> : "Post"}
                     </button>
                   </form>
                 </div>
@@ -181,10 +204,11 @@ const Post = ({ post }: any) => {
                 className="flex gap-1 items-center group cursor-pointer"
                 onClick={handleLikePost}
               >
-                {!isLiked && (
+                {isLiking && <LoadingSpinner size="sm" />}
+                {!isLiked && !isLiking && (
                   <FaRegHeart className="w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-500" />
                 )}
-                {isLiked && (
+                {isLiked && !isLiking && (
                   <FaRegHeart className="w-4 h-4 cursor-pointer text-pink-500 " />
                 )}
 
