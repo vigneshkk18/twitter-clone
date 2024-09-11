@@ -4,7 +4,7 @@ import Posts from "../../components/Posts/Posts";
 import CreatePost from "../../components/Home/CreatePost";
 
 const HomePage = () => {
-  const [feedType, setFeedType] = useState("forYou");
+  const [feedType, setFeedType] = useState<"forYou" | "following">("forYou");
 
   return (
     <>
@@ -37,7 +37,7 @@ const HomePage = () => {
         <CreatePost />
 
         {/* POSTS */}
-        <Posts />
+        <Posts feedType={feedType} />
       </div>
     </>
   );
